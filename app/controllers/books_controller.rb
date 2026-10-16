@@ -3,7 +3,8 @@ class BooksController < ApplicationController
 
   def index
     books = Book.includes(:author, :bookings).order(:id)
-    render json: books.map { |book| BookSerializer.new(book).summary }
+
+    render json: BookSerializer.collection(books)
   end
 
   def show
@@ -13,6 +14,7 @@ class BooksController < ApplicationController
   def create
     book = Book.new(book_params.except(:author))
     book.author = Author.find_or_initialize_by(name: book_params[:author]) if book_params[:author].present?
+
     if book.save
       render json: BookSerializer.new(book).summary, status: :created
     else

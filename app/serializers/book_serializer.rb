@@ -3,6 +3,10 @@ class BookSerializer
     @book = book
   end
 
+  def self.collection(books)
+    books.map { |book| new(book).summary }
+  end
+
   def summary
     attributes
   end
