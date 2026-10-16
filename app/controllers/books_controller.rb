@@ -2,7 +2,7 @@ class BooksController < ApplicationController
   before_action :set_book, only: %i[show destroy borrow return]
 
   def index
-    books = Book.includes(:bookings).order(:id)
+    books = Book.includes(:author, :bookings).order(:id)
     render json: books.map { |book| book_data(book) }
   end
 
@@ -14,7 +14,8 @@ class BooksController < ApplicationController
   end
 
   def create
-    book = Book.new(book_params)
+    book = Book.new(book_params.except(:author))
+    book.author = Author.find_or_initialize_by(name: book_params[:author]) if book_params[:author].present?
     if book.save
       render json: book_data(book), status: :created
     else
@@ -62,7 +63,7 @@ class BooksController < ApplicationController
   end
 
   def book_data(book)
-    { id: book.id, serial_number: book.serial_number, title: book.title, author: book.author,
+    { id: book.id, serial_number: book.serial_number, title: book.title, author: book.author.name,
       status: book.active_booking ? "borrowed" : "available" }
   end
 

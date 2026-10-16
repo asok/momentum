@@ -34,6 +34,21 @@ books = [
 books.each do |serial_number, title, author|
   Book.find_or_create_by!(serial_number: serial_number) do |book|
     book.title = title
-    book.author = author
+    book.author = Author.find_or_create_by!(name: author)
+  end
+end
+
+users = [
+  ["200001", "Ada Lovelace", "ada@example.com"],
+  ["200002", "Alan Turing", "alan@example.com"],
+  ["200003", "Grace Hopper", "grace@example.com"],
+  ["200004", "Katherine Johnson", "katherine@example.com"],
+  ["200005", "Margaret Hamilton", "margaret@example.com"]
+]
+
+users.each do |card_number, full_name, email|
+  User.find_or_create_by!(card_number: card_number) do |user|
+    user.full_name = full_name
+    user.email = email
   end
 end

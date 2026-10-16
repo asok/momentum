@@ -4,7 +4,8 @@ RSpec.describe "Library API", type: :request do
   include ActiveJob::TestHelper
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:book) { Book.create!(serial_number: "000001", title: "A Book", author: "A Writer") }
+  let(:author) { Author.create!(name: "A Writer") }
+  let(:book) { Book.create!(serial_number: "000001", title: "A Book", author: author) }
   let(:reader) { User.create!(card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
 
   before { clear_enqueued_jobs }
@@ -15,7 +16,21 @@ RSpec.describe "Library API", type: :request do
       post "/books", params: { book: { serial_number: "000001", title: "A Book", author: "A Writer" } }
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to include("serial_number" => "000001", "status" => "available")
+      expect(response.parsed_body).to include("serial_number" => "000001", "author" => "A Writer", "status" => "available")
+    end
+
+    it "reuses an existing author for books by the same writer" do
+      author
+      post "/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
+
+      expect(Book.last.author).to eq(author)
+      expect(Author.count).to eq(1)
+    end
+
+    it "rejects a book without an author" do
+      post "/books", params: { book: { serial_number: "000002", title: "Another Book" } }
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "rejects a duplicate or malformed serial number" do
@@ -51,12 +66,12 @@ RSpec.describe "Library API", type: :request do
       post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
       expect(response).to have_http_status(:created)
       get "/books"
-      expect(response.parsed_body.first).to include("status" => "borrowed")
+      expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "borrowed")
 
       post "/books/#{book.id}/return"
       expect(response).to have_http_status(:ok)
       get "/books"
-      expect(response.parsed_body.first).to include("status" => "available")
+      expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "available")
 
       post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
       get "/books/#{book.id}"
