@@ -23,6 +23,7 @@ gem "bootsnap", require: false
 
 group :test do
   gem "factory_bot_rails", "~> 6.5"
+  gem "rubocop", require: false
   gem "shoulda-matchers", "~> 6.0"
 end
 

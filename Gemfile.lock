@@ -325,6 +325,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.1.4)
   rspec-rails (~> 8.0)
+  rubocop
   rubocop-rails-omakase
   shoulda-matchers (~> 6.0)
   solid_queue
