@@ -3,21 +3,18 @@ class BooksController < ApplicationController
 
   def index
     books = Book.includes(:author, :bookings).order(:id)
-    render json: books.map { |book| book_data(book) }
+    render json: books.map { |book| BookSerializer.new(book).summary }
   end
 
   def show
-    render json: book_data(@book).merge(bookings: @book.bookings.includes(:user).order(:borrowed_at, :id).map do |booking|
-      { id: booking.id, borrowed_at: booking.borrowed_at, due_at: booking.due_at,
-        returned_at: booking.returned_at, reader: user_data(booking.user) }
-    end)
+    render json: BookSerializer.new(@book).with_history
   end
 
   def create
     book = Book.new(book_params.except(:author))
     book.author = Author.find_or_initialize_by(name: book_params[:author]) if book_params[:author].present?
     if book.save
-      render json: book_data(book), status: :created
+      render json: BookSerializer.new(book).summary, status: :created
     else
       render json: { errors: book.errors.full_messages }, status: :unprocessable_content
     end
@@ -39,15 +36,15 @@ class BooksController < ApplicationController
     return render json: { error: "Reader not found" }, status: :not_found unless user
 
     booking = BorrowBook.call(book: @book, user: user)
-    render json: { booking_id: booking.id, borrowed_at: booking.borrowed_at, due_at: booking.due_at,
-                   book: book_data(@book.reload), reader: user_data(user) }, status: :created
+
+    render json: BookingSerializer.new(booking).for_borrow, status: :created
   rescue BorrowBook::AlreadyBorrowed => e
     render json: { error: e.message }, status: :conflict
   end
 
   def return
     booking = ReturnBook.call(book: @book)
-    render json: { booking_id: booking.id, returned_at: booking.returned_at, book: book_data(@book.reload) }
+    render json: BookingSerializer.new(booking).for_return
   rescue ReturnBook::NotBorrowed => e
     render json: { error: e.message }, status: :conflict
   end
@@ -60,14 +57,5 @@ class BooksController < ApplicationController
 
   def book_params
     params.require(:book).permit(:serial_number, :title, :author)
-  end
-
-  def book_data(book)
-    { id: book.id, serial_number: book.serial_number, title: book.title, author: book.author.name,
-      status: book.active_booking ? "borrowed" : "available" }
-  end
-
-  def user_data(user)
-    { card_number: user.card_number, full_name: user.full_name, email: user.email }
   end
 end
