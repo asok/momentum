@@ -12,10 +12,9 @@ class BooksController < ApplicationController
   end
 
   def create
-    book = Book.new(book_params.except(:author))
-    book.author = Author.find_or_initialize_by(name: book_params[:author]) if book_params[:author].present?
+    book = CreateBook.call(attributes: book_params)
 
-    if book.save
+    if book.persisted?
       render json: BookSerializer.new(book).summary, status: :created
     else
       render json: { errors: book.errors.full_messages }, status: :unprocessable_content

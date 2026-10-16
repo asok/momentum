@@ -27,6 +27,23 @@ RSpec.describe "Library API", type: :request do
       expect(Author.count).to eq(1)
     end
 
+    it "retries with the author created by a competing request" do
+      allow_any_instance_of(Book).to receive(:save).and_wrap_original do |save, *args|
+        unless Author.exists?(name: "A Writer")
+          Author.create!(name: "A Writer")
+          raise ActiveRecord::RecordNotUnique
+        end
+
+        save.call(*args)
+      end
+
+      post "/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
+
+      expect(response).to have_http_status(:created)
+      expect(Book.last.author.name).to eq("A Writer")
+      expect(Author.count).to eq(1)
+    end
+
     it "rejects a book without an author" do
       post "/books", params: { book: { serial_number: "000002", title: "Another Book" } }
 
