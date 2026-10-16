@@ -10,12 +10,13 @@ module BookReminderMixin
 
     message = reminder_message(booking)
 
-    log_message(message)
+    log_message(booking, message)
+    message.deliver_now
   end
 
   protected
 
-  def log_message(message)
+  def log_message(booking, message)
     Rails.logger.info(
       {
         event:      "book_reminder",
