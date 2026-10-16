@@ -1,6 +1,4 @@
 class BooksController < ApplicationController
-  before_action :set_book, only: %i[show destroy borrow return]
-
   def index
     books = Book.includes(:author, :bookings).order(:id)
 
@@ -8,7 +6,7 @@ class BooksController < ApplicationController
   end
 
   def show
-    render json: BookSerializer.new(@book).with_history
+    render json: BookSerializer.new(resource).with_history
   end
 
   def create
@@ -22,11 +20,11 @@ class BooksController < ApplicationController
   end
 
   def destroy
-    @book.with_lock do
-      if @book.bookings.where(returned_at: nil).exists?
+    resource.with_lock do
+      if resource.bookings.where(returned_at: nil).exists?
         render_error("Return the book before deleting it", :conflict)
       else
-        @book.destroy!
+        resource.destroy!
 
         head :no_content
       end
@@ -34,18 +32,18 @@ class BooksController < ApplicationController
   end
 
   def borrow
-    user = User.find_by(card_number: params.require(:card_number))
-    return render_error("Reader not found", :not_found) unless user
-
-    booking = BorrowBook.call(book: @book, user: user)
+    user    = User.find_by(card_number: params.require(:card_number))
+    booking = BorrowBook.call(book: resource, user: user)
 
     render json: BookingSerializer.new(booking).for_borrow, status: :created
   rescue BorrowBook::AlreadyBorrowed => e
     render_error(e.message, :conflict)
+  rescue BorrowBook::UserNotFound => e
+    render_error(e.message, :not_found)
   end
 
   def return
-    booking = ReturnBook.call(book: @book)
+    booking = ReturnBook.call(book: resource)
 
     render json: BookingSerializer.new(booking).for_return
   rescue ReturnBook::NotBorrowed => e
@@ -54,8 +52,8 @@ class BooksController < ApplicationController
 
   private
 
-  def set_book
-    @book = Book.find(params[:id])
+  def resource
+    @book ||= Book.find(params.fetch(:id))
   end
 
   def book_params

@@ -1,7 +1,10 @@
 class BorrowBook
   class AlreadyBorrowed < StandardError; end
+  class UserNotFound < StandardError; end
 
   def self.call(book:, user:)
+    raise UserNotFound, "Reader not found" unless user
+
     booking = book.with_lock do
       raise AlreadyBorrowed, "Book is already borrowed" if book.bookings.where(returned_at: nil).exists?
 
