@@ -9,7 +9,7 @@ class BorrowBook
     end
 
     [ 27.days, 30.days ].each do |offset|
-      BookReminderJob.set(wait_until: booking.borrowed_at + offset).perform_later(booking.id, offset == 27.days ? "early" : "due")
+      BookReminderJob.set(wait_until: booking.borrowed_at + offset).perform_later(booking, offset == 27.days ? "early" : "due")
     end
     booking
   end
