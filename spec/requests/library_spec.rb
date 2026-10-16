@@ -49,10 +49,21 @@ RSpec.describe "Library API", type: :request do
       expect(response).to have_http_status(:created)
       borrowed_booking = book.bookings.last
       expect(response.parsed_body).to eq(
-        "booking_id" => borrowed_booking.id, "borrowed_at" => borrowed_booking.borrowed_at.iso8601(3),
+        "booking_id" => borrowed_booking.id,
+        "borrowed_at" => borrowed_booking.borrowed_at.iso8601(3),
         "due_at" => borrowed_booking.due_at.iso8601(3),
-        "book" => { "id" => book.id, "serial_number" => "000001", "title" => "A Book", "author" => "A Writer", "status" => "borrowed" },
-        "reader" => { "card_number" => "000123", "full_name" => "Ada Lovelace", "email" => "ada@example.com" }
+        "book" => {
+          "id" => book.id,
+          "serial_number" => "000001",
+          "title" => "A Book",
+          "author" => "A Writer",
+          "status" => "borrowed"
+        },
+        "reader" => {
+          "card_number" => "000123",
+          "full_name" => "Ada Lovelace",
+          "email" => "ada@example.com"
+        }
       )
       get "/books"
       expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to eq(
@@ -63,8 +74,15 @@ RSpec.describe "Library API", type: :request do
       post "/books/#{book.id}/return"
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body).to eq(
-        "booking_id" => borrowed_booking.id, "returned_at" => borrowed_booking.reload.returned_at.iso8601(3),
-        "book" => { "id" => book.id, "serial_number" => "000001", "title" => "A Book", "author" => "A Writer", "status" => "available" }
+        "booking_id" => borrowed_booking.id,
+        "returned_at" => borrowed_booking.reload.returned_at.iso8601(3),
+        "book" => {
+          "id" => book.id,
+          "serial_number" => "000001",
+          "title" => "A Book",
+          "author" => "A Writer",
+          "status" => "available"
+        }
       )
       get "/books"
       expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "available")
@@ -75,9 +93,15 @@ RSpec.describe "Library API", type: :request do
       expect(response.parsed_body.fetch("bookings").map { |entry| entry.fetch("returned_at").nil? }).to eq([ false, true ])
       first_booking = book.bookings.order(:borrowed_at, :id).first
       expect(response.parsed_body.fetch("bookings").first).to eq(
-        "id" => first_booking.id, "borrowed_at" => first_booking.borrowed_at.iso8601(3),
-        "due_at" => first_booking.due_at.iso8601(3), "returned_at" => first_booking.returned_at.iso8601(3),
-        "reader" => { "card_number" => "000123", "full_name" => "Ada Lovelace", "email" => "ada@example.com" }
+        "id" => first_booking.id,
+        "borrowed_at" => first_booking.borrowed_at.iso8601(3),
+        "due_at" => first_booking.due_at.iso8601(3),
+        "returned_at" => first_booking.returned_at.iso8601(3),
+        "reader" => {
+          "card_number" => "000123",
+          "full_name" => "Ada Lovelace",
+          "email" => "ada@example.com"
+        }
       )
     end
 
@@ -160,8 +184,12 @@ RSpec.describe "Library API", type: :request do
       get "/books/#{book.id}"
 
       expect(response.parsed_body).to eq(
-        "id" => book.id, "serial_number" => "000001", "title" => "A Book",
-        "author" => "A Writer", "status" => "available", "bookings" => []
+        "id" => book.id,
+        "serial_number" => "000001",
+        "title" => "A Book",
+        "author" => "A Writer",
+        "status" => "available",
+        "bookings" => []
       )
     end
 
