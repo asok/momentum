@@ -68,8 +68,8 @@ RSpec.describe "Library API", type: :request do
 
         booking_arg = { "_aj_globalid" => book.bookings.last.to_global_id.to_s }
         expect(enqueued_jobs.map { |job| [ job[:job], job[:args], job[:at] ] }).to eq([
-          [ BookReminderJob, [ booking_arg, "early" ], 27.days.from_now.to_f ],
-          [ BookReminderJob, [ booking_arg, "due" ], 30.days.from_now.to_f ]
+          [ EarlyBookReminderJob, [ booking_arg ], 27.days.from_now.to_f ],
+          [ LaterBookReminderJob, [ booking_arg ], 30.days.from_now.to_f ]
         ])
         expect(response.parsed_body.fetch("due_at")).to eq(30.days.from_now.iso8601(3))
       end
@@ -100,7 +100,7 @@ RSpec.describe "Library API", type: :request do
       log = StringIO.new
       original_logger = Rails.logger
       Rails.logger = ActiveSupport::Logger.new(log)
-      BookReminderJob.perform_now(book.bookings.last, "due")
+      LaterBookReminderJob.perform_now(book.bookings.last)
       expect(log.string).not_to include('"event":"book_reminder"')
     ensure
       Rails.logger = original_logger
@@ -112,7 +112,7 @@ RSpec.describe "Library API", type: :request do
       log = StringIO.new
       original_logger = Rails.logger
       Rails.logger = ActiveSupport::Logger.new(log)
-      BookReminderJob.perform_now(book.bookings.last, "early")
+      EarlyBookReminderJob.perform_now(book.bookings.last)
       expect(log.string).to include('"to":["ada@example.com"]')
     ensure
       Rails.logger = original_logger
