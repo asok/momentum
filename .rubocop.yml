@@ -66,6 +66,9 @@ Style/Documentation:
 Style/DocumentationMethod:
   Enabled: false
 
+Style/EmptyClassDefinition:
+  Enabled: false
+
 Style/TrailingCommaInArrayLiteral:
   Enabled: false
 

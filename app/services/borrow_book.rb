@@ -1,6 +1,6 @@
 class BorrowBook
-  class AlreadyBorrowed < StandardError; end
-  class UserNotFound < StandardError; end
+  AlreadyBorrowed = Class.new(StandardError)
+  UserNotFound    = Class.new(StandardError)
 
   def self.call(book:, user:)
     raise UserNotFound, "Reader not found" unless user

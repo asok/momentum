@@ -1,5 +1,5 @@
 class ReturnBook
-  class NotBorrowed < StandardError; end
+  NotBorrowed = Class.new(StandardError)
 
   def self.call(book:)
     book.with_lock do
