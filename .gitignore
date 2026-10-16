@@ -1,0 +1,10 @@
+/.bundle
+/.env
+/config/master.key
+/log/*
+!/log/.keep
+/tmp/*
+!/tmp/.keep
+/public/assets
+/db/*.sqlite3
+.DS_Store

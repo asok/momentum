@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: library
+      POSTGRES_PASSWORD: library
+      POSTGRES_DB: momentum_development
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library -d momentum_development"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    environment: &app_environment
+      RAILS_ENV: development
+      DB_HOST: db
+      DB_USER: library
+      DB_PASSWORD: library
+      DATABASE_NAME: momentum_development
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "bin/rails db:prepare && bin/rails server -b 0.0.0.0"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+
+  worker:
+    build: .
+    environment: *app_environment
+    depends_on:
+      web:
+        condition: service_healthy
+    command: ["bin/jobs", "start"]
+
+volumes:
+  postgres_data:
