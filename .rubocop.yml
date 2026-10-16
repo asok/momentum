@@ -1,8 +1,255 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+AllCops:
+  TargetRubyVersion: 3.2
+  SuggestExtensions: false
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'spec/fixtures/**/*'
+    - 'tmp/**/*'
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+Layout/ElseAlignment:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+Layout/FirstArgumentIndentation:
+  Enabled: false
+
+Layout/HashAlignment:
+  Enabled: true
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle:      table
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Layout/SpaceAroundBlockParameters:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
+
+Lint/AssignmentInCondition:
+  Enabled: false
+
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+Style/StabbyLambdaParentheses:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/WordArray:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/DocumentationMethod:
+  Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
+
+Layout/TrailingEmptyLines:
+  Enabled: false
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+Style/MultilineWhenThen:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Style/RescueStandardError:
+  Enabled: false
+
+Layout/ClosingHeredocIndentation:
+  Enabled: false
+
+Layout/HeredocIndentation:
+  Enabled: false
+
+Lint/IneffectiveAccessModifier:
+  Enabled: false
+
+Style/Lambda:
+  EnforcedStyle: literal
+
+Layout/SpaceInLambdaLiteral:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/CaseEquality:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  CountRepeatedAttributes: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'spec/**/*_spec.rb'
+    - 'spec/factories/*'
+    - 'config/routes.rb'
+    - 'config/routes/*.rb'
+    - 'db/schema.rb'
+
+Metrics/ModuleLength:
+  Exclude:
+    - 'spec/**/*.rb'
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Naming/MemoizedInstanceVariableName:
+  Enabled: false
+
+Naming/VariableNumber:
+  CheckSymbols: false
+
+Naming/PredicateName:
+  Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: true
+Style/HashTransformValues:
+  Enabled: true
+Style/EvalWithLocation:
+  Enabled: false
+
+Layout/EmptyLinesAroundAttributeAccessor:
+  Enabled: true
+Layout/SpaceAroundMethodCallOperator:
+  Enabled: true
+Lint/BinaryOperatorWithIdenticalOperands:
+  Enabled: true
+Lint/ConstantDefinitionInBlock:
+  Enabled: false
+Lint/DeprecatedOpenSSLConstant:
+  Enabled: true
+Lint/DuplicateElsifCondition:
+  Enabled: true
+Lint/DuplicateRescueException:
+  Enabled: true
+Lint/EmptyConditionalBody:
+  Enabled: true
+Lint/FloatComparison:
+  Enabled: true
+Lint/MissingSuper:
+  Enabled: false
+Lint/MixedRegexpCaptureTypes:
+  Enabled: true
+Lint/OutOfRangeRegexpRef:
+  Enabled: true
+Lint/RaiseException:
+  Enabled: true
+Lint/SelfAssignment:
+  Enabled: true
+Lint/StructNewOverride:
+  Enabled: true
+Lint/TopLevelReturnWithArgument:
+  Enabled: true
+Lint/UnreachableLoop:
+  Enabled: true
+Style/AccessorGrouping:
+  Enabled: true
+Style/ArrayCoercion:
+  Enabled: true
+Style/BisectedAttrAccessor:
+  Enabled: true
+Style/CaseLikeIf:
+  Enabled: true
+Style/ExplicitBlockArgument:
+  Enabled: true
+Style/ExponentialNotation:
+  Enabled: true
+Style/GlobalStdStream:
+  Enabled: true
+Style/HashAsLastArrayItem:
+  Enabled: false
+Style/HashLikeCase:
+  Enabled: true
+Style/OptionalBooleanParameter:
+  Enabled: true
+Style/RedundantAssignment:
+  Enabled: true
+Style/RedundantFetchBlock:
+  Enabled: true
+Style/RedundantFileExtensionInRequire:
+  Enabled: true
+Style/RedundantRegexpCharacterClass:
+  Enabled: true
+Style/RedundantRegexpEscape:
+  Enabled: true
+Style/RedundantSort:
+  Enabled: false
+Style/SingleArgumentDig:
+  Enabled: false
+Style/SlicingWithRange:
+  Enabled: true
+Style/StringConcatenation:
+  Enabled: true
+
+Style/NumericLiterals:
+  Exclude:
+    - 'db/schema.rb'
+
+Layout/EmptyLinesAroundBlockBody:
+  Exclude:
+    - 'db/schema.rb'
+
+Layout/LineLength:
+  Max: 160
+  AllowURI: true
+  Exclude:
+    - 'db/schema.rb'
+
+Style/FormatStringToken:
+  Enabled: false
+
+Style/FormatString:
+  Enabled: false
+
+Style/YodaCondition:
+  Enabled: false
