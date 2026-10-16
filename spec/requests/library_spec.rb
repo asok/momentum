@@ -4,9 +4,9 @@ RSpec.describe "Library API", type: :request do
   include ActiveJob::TestHelper
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:author) { Author.create!(name: "A Writer") }
-  let(:book) { Book.create!(serial_number: "000001", title: "A Book", author: author) }
-  let(:reader) { User.create!(card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
+  let(:author) { create(:author, name: "A Writer") }
+  let(:book) { create(:book, serial_number: "000001", title: "A Book", author: author) }
+  let(:reader) { create(:user, card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
 
   before { clear_enqueued_jobs }
   after { clear_enqueued_jobs }

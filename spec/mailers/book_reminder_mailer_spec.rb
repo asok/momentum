@@ -1,10 +1,10 @@
 require "rails_helper"
 
 RSpec.describe BookReminderMailer, type: :mailer do
-  let(:author) { Author.create!(name: "A Writer") }
-  let(:book) { Book.create!(serial_number: "000001", title: "A Book", author: author) }
-  let(:reader) { User.create!(card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
-  let(:booking) { Booking.create!(book: book, user: reader, borrowed_at: Time.zone.parse("2026-10-16 12:00:00")) }
+  let(:author) { create(:author, name: "A Writer") }
+  let(:book) { create(:book, serial_number: "000001", title: "A Book", author: author) }
+  let(:reader) { create(:user, card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
+  let(:booking) { create(:booking, book: book, user: reader, borrowed_at: Time.zone.parse("2026-10-16 12:00:00")) }
   let(:body) { "Hello Ada Lovelace,\n\nPlease return A Book (000001) by 2026-11-15.\n" }
 
   describe ".early_reminder" do
