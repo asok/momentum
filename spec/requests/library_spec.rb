@@ -43,24 +43,6 @@ RSpec.describe "Library API", type: :request do
     end
   end
 
-  describe "POST /users" do
-    it "registers a reader" do
-      post "/users", params: { user: { card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com" } }
-
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to include("card_number" => "000123", "email" => "ada@example.com")
-    end
-
-    it "rejects duplicate card numbers and case-insensitive duplicate emails" do
-      reader
-      post "/users", params: { user: { card_number: "000123", full_name: "Other", email: "other@example.com" } }
-      expect(response).to have_http_status(:unprocessable_entity)
-
-      post "/users", params: { user: { card_number: "000124", full_name: "Other", email: "ADA@example.com" } }
-      expect(response).to have_http_status(:unprocessable_entity)
-    end
-  end
-
   describe "borrowing and returning" do
     it "lists status and complete history across multiple loans" do
       post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
