@@ -6,7 +6,6 @@ Ruby 3.2.2 / Rails 8.1 / PostgreSQL. Start with `docker compose up --build` (or 
 
 All payloads are JSON; serial and card numbers are **strings of exactly six digits** (leading zeroes are preserved).
 
-- `POST /users` — register a reader: `{ "user": { "card_number": "000123", "full_name": "Ada Lovelace", "email": "ada@example.com" } }`
 - `POST /books` — add a book: `{ "book": { "serial_number": "000001", "title": "A Book", "author": "An Author" } }`
 - `GET /books` — list books with `available`/`borrowed` status.
 - `GET /books/:id` — book details and chronological booking history, including reader, borrow/due/return dates.
@@ -27,7 +26,14 @@ A booking records every borrow/return. A partial unique index on open bookings p
 With Docker running, execute:
 
 ```sh
-docker compose run --rm -e RAILS_ENV=test -e DATABASE_NAME=momentum_library_spec web sh -c 'bin/rails db:prepare && bundle exec rspec'
+docker compose run --rm --build -e RAILS_ENV=test -e DATABASE_NAME=momentum_library_spec web sh -c 'bin/rails db:test:prepare && bundle exec rspec'
 ```
 
-Tests use the Active Job test adapter to inspect scheduled reminders without starting a worker.
+To run RSpec on your host (with Ruby 3.2.2 and the bundle installed), start PostgreSQL and connect through its loopback-only port `5433`:
+
+```sh
+docker compose up -d db
+RAILS_ENV=test DB_HOST=127.0.0.1 DB_PORT=5433 DB_USER=library DB_PASSWORD=library DATABASE_NAME=momentum_library_spec_local sh -c 'bin/rails db:test:prepare && bundle exec rspec'
+```
+
+Port `5433` avoids conflicts with a locally installed PostgreSQL on `5432`. Tests use the Active Job test adapter to inspect scheduled reminders without starting a worker.
