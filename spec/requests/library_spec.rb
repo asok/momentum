@@ -31,6 +31,7 @@ RSpec.describe "Library API", type: :request do
       post "/books", params: { book: { serial_number: "000002", title: "Another Book" } }
 
       expect(response).to have_http_status(:unprocessable_entity)
+      expect(Book.count).to eq(0)
     end
 
     it "rejects a duplicate or malformed serial number" do
