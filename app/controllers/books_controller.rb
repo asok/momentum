@@ -17,16 +17,17 @@ class BooksController < ApplicationController
     if book.persisted?
       render json: BookSerializer.new(book).summary, status: :created
     else
-      render json: { errors: book.errors.full_messages }, status: :unprocessable_content
+      render_errors(book.errors.full_messages, :unprocessable_content)
     end
   end
 
   def destroy
     @book.with_lock do
       if @book.bookings.where(returned_at: nil).exists?
-        render json: { error: "Return the book before deleting it" }, status: :conflict
+        render_error("Return the book before deleting it", :conflict)
       else
         @book.destroy!
+
         head :no_content
       end
     end
@@ -34,20 +35,21 @@ class BooksController < ApplicationController
 
   def borrow
     user = User.find_by(card_number: params.require(:card_number))
-    return render json: { error: "Reader not found" }, status: :not_found unless user
+    return render_error("Reader not found", :not_found) unless user
 
     booking = BorrowBook.call(book: @book, user: user)
 
     render json: BookingSerializer.new(booking).for_borrow, status: :created
   rescue BorrowBook::AlreadyBorrowed => e
-    render json: { error: e.message }, status: :conflict
+    render_error(e.message, :conflict)
   end
 
   def return
     booking = ReturnBook.call(book: @book)
+
     render json: BookingSerializer.new(booking).for_return
   rescue ReturnBook::NotBorrowed => e
-    render json: { error: e.message }, status: :conflict
+    render_error(e.message, :conflict)
   end
 
   private
@@ -58,5 +60,13 @@ class BooksController < ApplicationController
 
   def book_params
     @book_params ||= params.require(:book).permit(:serial_number, :title, :author)
+  end
+
+  def render_error(error, status)
+    render json: { error: error }, status: status
+  end
+
+  def render_errors(errors, status)
+    render json: { errors: errors }, status: status
   end
 end
