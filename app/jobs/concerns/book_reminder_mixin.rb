@@ -6,7 +6,7 @@ module BookReminderMixin
   end
 
   def perform(booking)
-    return unless booking.returned_at.nil?
+    return if booking.returned_at
 
     message = reminder_message(booking)
 
