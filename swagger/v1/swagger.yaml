@@ -1,0 +1,183 @@
+---
+openapi: 3.0.1
+info:
+  title: Momentum Library API
+  description: Manage the library catalog, borrow books, and track returns.
+  version: v1
+paths:
+  "/books":
+    get:
+      summary: List books
+      tags:
+      - Books
+      responses:
+        '200':
+          description: books listed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    serial_number:
+                      type: string
+                    title:
+                      type: string
+                    author:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                      - available
+                      - borrowed
+                  required:
+                  - id
+                  - serial_number
+                  - title
+                  - author
+                  - status
+    post:
+      summary: Create a book
+      tags:
+      - Books
+      parameters: []
+      responses:
+        '201':
+          description: book created
+        '422':
+          description: invalid book
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book:
+                  type: object
+                  properties:
+                    serial_number:
+                      type: string
+                      example: '000001'
+                    title:
+                      type: string
+                      example: The Pragmatic Programmer
+                    author:
+                      type: string
+                      example: David Thomas
+                  required:
+                  - serial_number
+                  - title
+                  - author
+              required:
+              - book
+        description: Book details to add to the catalog.
+  "/books/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: The unique ID of the book.
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show a book and its loan history
+      tags:
+      - Books
+      responses:
+        '200':
+          description: book found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  serial_number:
+                    type: string
+                  title:
+                    type: string
+                  author:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                    - available
+                    - borrowed
+                  bookings:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - id
+                - serial_number
+                - title
+                - author
+                - status
+                - bookings
+        '404':
+          description: book not found
+    delete:
+      summary: Delete a book
+      tags:
+      - Books
+      responses:
+        '204':
+          description: book deleted
+        '409':
+          description: book has an active loan
+  "/books/{id}/borrow":
+    parameters:
+    - name: id
+      in: path
+      description: The unique ID of the book to borrow.
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Borrow a book
+      tags:
+      - Loans
+      parameters: []
+      responses:
+        '201':
+          description: book borrowed
+        '404':
+          description: reader not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                card_number:
+                  type: string
+                  example: '000123'
+              required:
+              - card_number
+        description: The library card number of the reader borrowing the book.
+  "/books/{id}/return":
+    parameters:
+    - name: id
+      in: path
+      description: The unique ID of the book to return.
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Return a book
+      tags:
+      - Loans
+      responses:
+        '200':
+          description: book returned
+        '409':
+          description: book is not borrowed
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000

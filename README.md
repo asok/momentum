@@ -21,6 +21,18 @@ A booking records every borrow/return. A partial unique index on open bookings p
 
 `BorrowBook` schedules two Solid Queue jobs, 27 and 30 days after the loan began. Solid Queue uses a separate database on the same PostgreSQL server and runs in the `worker` container. A job skips a returned/deleted booking; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders; an outbox would make this atomic in a production system.
 
+## API documentation
+
+Interactive API documentation is available at [`/api-docs`](http://localhost:3000/api-docs) when the app is running. The page uses [Scalar](https://scalar.com/) and loads the OpenAPI document from `/api-docs/v1/swagger.yaml`. Scalar's API Reference script is pinned to version 1.75.0 on jsDelivr; the page itself is in `public/scalar/`.
+
+The request specs in `spec/requests/books_api_spec.rb` use the rswag DSL as both executable API examples and the source for the OpenAPI document. After updating those specs, regenerate the checked-in document with:
+
+```sh
+bundle exec rake rswag:specs:swaggerize
+```
+
+If PostgreSQL is not available at the default local connection, set the test database connection variables used in the host test instructions below when running this command.
+
 ## Tests
 
 With Docker running, execute:
