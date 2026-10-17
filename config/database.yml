@@ -11,10 +11,7 @@ development:
   primary:
     <<: *default
     database: <%= ENV.fetch("DATABASE_NAME", "momentum_development") %>
-  queue:
-    <<: *default
-    database: <%= ENV.fetch("DATABASE_NAME", "momentum_development") %>_queue
-    migrations_paths: db/queue_migrate
+
 
 test:
   <<: *default
@@ -24,7 +21,4 @@ production:
   primary:
     <<: *default
     database: <%= ENV.fetch("DATABASE_NAME", "momentum_production") %>
-  queue:
-    <<: *default
-    database: <%= ENV.fetch("DATABASE_NAME", "momentum_production") %>_queue
-    migrations_paths: db/queue_migrate
+
