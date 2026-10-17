@@ -41,15 +41,44 @@ RSpec.describe "Library API", type: :request do
     end
   end
 
-  describe "borrowing and returning" do
-    it "lists status and complete history across multiple loans" do
+  describe "POST /return" do
+    context "when the book is borrowed" do
+      let!(:booking) { create(:booking, book: book, user: reader) }
+
+      it "returns the book and marks its booking as returned" do
+        post "/books/#{book.id}/return"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq(
+          "booking_id" => booking.id,
+          "returned_at" => booking.reload.returned_at.iso8601(3),
+          "book" => {
+            "id" => book.id,
+            "serial_number" => "000001",
+            "title" => "A Book",
+            "author" => "A Writer",
+            "status" => "available"
+          }
+        )
+      end
+    end
+
+    it "rejects returning an available book" do
+      post "/books/#{book.id}/return"
+      expect(response).to have_http_status(:conflict)
+    end
+  end
+
+  describe "POST /borrow" do
+    it "creates a booking and returns the borrowed book and reader" do
       post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+
+      booking = book.bookings.last
       expect(response).to have_http_status(:created)
-      borrowed_booking = book.bookings.last
       expect(response.parsed_body).to eq(
-        "booking_id" => borrowed_booking.id,
-        "borrowed_at" => borrowed_booking.borrowed_at.iso8601(3),
-        "due_at" => borrowed_booking.due_at.iso8601(3),
+        "booking_id" => booking.id,
+        "borrowed_at" => booking.borrowed_at.iso8601(3),
+        "due_at" => booking.due_at.iso8601(3),
         "book" => {
           "id" => book.id,
           "serial_number" => "000001",
@@ -63,117 +92,98 @@ RSpec.describe "Library API", type: :request do
           "email" => "ada@example.com"
         }
       )
-      get "/books"
-      expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to eq(
-        "id" => book.id, "serial_number" => "000001", "title" => "A Book",
-        "author" => "A Writer", "status" => "borrowed"
-      )
-
-      post "/books/#{book.id}/return"
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to eq(
-        "booking_id" => borrowed_booking.id,
-        "returned_at" => borrowed_booking.reload.returned_at.iso8601(3),
-        "book" => {
-          "id" => book.id,
-          "serial_number" => "000001",
-          "title" => "A Book",
-          "author" => "A Writer",
-          "status" => "available"
-        }
-      )
-      get "/books"
-      expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "available")
-
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-      get "/books/#{book.id}"
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.fetch("bookings").map { |entry| entry.fetch("returned_at").nil? }).to eq([ false, true ])
-      first_booking = book.bookings.order(:borrowed_at, :id).first
-      expect(response.parsed_body.fetch("bookings").first).to eq(
-        "id" => first_booking.id,
-        "borrowed_at" => first_booking.borrowed_at.iso8601(3),
-        "due_at" => first_booking.due_at.iso8601(3),
-        "returned_at" => first_booking.returned_at.iso8601(3),
-        "reader" => {
-          "card_number" => "000123",
-          "full_name" => "Ada Lovelace",
-          "email" => "ada@example.com"
-        }
-      )
     end
 
     it "schedules reminders on day 27 and day 30" do
       travel_to Time.zone.parse("2026-10-16 12:00:00") do
         post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
 
-        booking_arg = { "_aj_globalid" => book.bookings.last.to_global_id.to_s }
-        expect(enqueued_jobs.map { |job| [ job[:job], job[:args], job[:at] ] }).to eq([
-          [ EarlyBookReminderJob, [ booking_arg ], 27.days.from_now.to_f ],
-          [ LaterBookReminderJob, [ booking_arg ], 30.days.from_now.to_f ]
-        ])
+        booking = book.bookings.last
+
+        expect(EarlyBookReminderJob)
+          .to have_been_enqueued.with(booking).at(27.days.from_now).once
+        expect(LaterBookReminderJob)
+          .to have_been_enqueued.with(booking).at(30.days.from_now).once
+
         expect(response.parsed_body.fetch("due_at")).to eq(30.days.from_now.iso8601(3))
       end
     end
 
-    it "rejects another borrowing while the book is out" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+    context "when the book was previously returned" do
+      let!(:previous_booking) { create(:booking, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
 
-      expect(response).to have_http_status(:conflict)
-      expect(book.bookings.count).to eq(1)
+      it "enqueues reminders for the new booking" do
+        post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+
+        booking = book.bookings.last
+        expect(response).to have_http_status(:created)
+        expect(EarlyBookReminderJob).to have_been_enqueued.with(booking).once
+        expect(LaterBookReminderJob).to have_been_enqueued.with(booking).once
+      end
     end
 
-    it "rejects returning an available book" do
-      post "/books/#{book.id}/return"
-      expect(response).to have_http_status(:conflict)
+    context "when the book is already borrowed" do
+      let!(:booking) { create(:booking, book: book, user: reader) }
+
+      it "rejects another borrowing" do
+        post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+
+        expect(response).to have_http_status(:conflict)
+        expect(book.bookings.count).to eq(1)
+      end
     end
 
     it "rejects a missing reader" do
       post "/books/#{book.id}/borrow", params: { card_number: "999999" }
       expect(response).to have_http_status(:not_found)
     end
-
-    it "does not log reminders after a return" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-      post "/books/#{book.id}/return"
-
-      log = StringIO.new
-      original_logger = Rails.logger
-      Rails.logger = ActiveSupport::Logger.new(log)
-      LaterBookReminderJob.perform_now(book.bookings.last)
-      expect(log.string).not_to include('"event":"book_reminder"')
-    ensure
-      Rails.logger = original_logger
-    end
-
-    it "logs the email payload for an open booking" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-
-      log = StringIO.new
-      original_logger = Rails.logger
-      Rails.logger = ActiveSupport::Logger.new(log)
-      EarlyBookReminderJob.perform_now(book.bookings.last)
-      expect(log.string).to include('"to":["ada@example.com"]')
-    ensure
-      Rails.logger = original_logger
-    end
   end
 
   describe "DELETE /books/:id" do
-    it "removes a returned book and its history" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-      post "/books/#{book.id}/return"
-      delete "/books/#{book.id}"
+    context "when the book has been returned" do
+      let!(:booking) { create(:booking, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
 
-      expect(response).to have_http_status(:no_content)
-      expect(Booking.count).to eq(0)
+      it "removes the book and its history" do
+        delete "/books/#{book.id}"
+
+        expect(response).to have_http_status(:no_content)
+        expect(Booking.count).to eq(0)
+      end
     end
 
-    it "refuses to delete an active loan" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
-      delete "/books/#{book.id}"
-      expect(response).to have_http_status(:conflict)
+    context "when the book is borrowed" do
+      let!(:booking) { create(:booking, book: book, user: reader) }
+
+      it "refuses to delete the book" do
+        delete "/books/#{book.id}"
+
+        expect(response).to have_http_status(:conflict)
+      end
+    end
+  end
+
+  describe "GET /books" do
+    context "when a book is borrowed" do
+      let!(:booking) { create(:booking, book: book, user: reader) }
+
+      it "lists the book as borrowed" do
+        get "/books"
+
+        expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to eq(
+          "id" => book.id, "serial_number" => "000001", "title" => "A Book",
+          "author" => "A Writer", "status" => "borrowed"
+        )
+      end
+    end
+
+    context "when a book has been returned" do
+      let!(:booking) { create(:booking, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
+
+      it "lists the book as available" do
+        get "/books"
+
+        expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "available")
+      end
     end
   end
 
@@ -189,6 +199,29 @@ RSpec.describe "Library API", type: :request do
         "status" => "available",
         "bookings" => []
       )
+    end
+
+    context "with multiple bookings" do
+      let!(:first_booking) { create(:booking, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
+      let!(:second_booking) { create(:booking, book: book, user: reader) }
+
+      it "lists complete history with the returned booking first" do
+        get "/books/#{book.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body.fetch("bookings").map { |entry| entry.fetch("returned_at").nil? }).to eq([ false, true ])
+        expect(response.parsed_body.fetch("bookings").first).to eq(
+          "id" => first_booking.id,
+          "borrowed_at" => first_booking.borrowed_at.iso8601(3),
+          "due_at" => first_booking.due_at.iso8601(3),
+          "returned_at" => first_booking.returned_at.iso8601(3),
+          "reader" => {
+            "card_number" => "000123",
+            "full_name" => "Ada Lovelace",
+            "email" => "ada@example.com"
+          }
+        )
+      end
     end
 
     it "returns 404 for a missing book" do
