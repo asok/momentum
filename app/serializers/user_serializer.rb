@@ -7,7 +7,7 @@ class UserSerializer
     {
       card_number: @user.card_number,
       full_name:   @user.full_name,
-      email:      @user.email
+      email:       @user.email
     }
   end
 end

@@ -11,7 +11,7 @@ RSpec.describe BookReminderMailer, type: :mailer do
       message = described_class.early_reminder(booking)
 
       expect(message).to have_attributes(
-        to:      [ "ada@example.com" ],
+        to:      ["ada@example.com"],
         subject: "Your library book is due in 3 days",
         body:    have_attributes(decoded: body)
       )
@@ -23,7 +23,7 @@ RSpec.describe BookReminderMailer, type: :mailer do
       message = described_class.late_reminder(booking)
 
       expect(message).to have_attributes(
-        to:      [ "ada@example.com" ],
+        to:      ["ada@example.com"],
         subject: "Your library book is due today",
         body:    have_attributes(decoded: body)
       )

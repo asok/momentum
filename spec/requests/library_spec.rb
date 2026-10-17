@@ -50,14 +50,14 @@ RSpec.describe "Library API", type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body).to eq(
-          "booking_id" => booking.id,
+          "booking_id"  => booking.id,
           "returned_at" => booking.reload.returned_at.iso8601(3),
-          "book" => {
-            "id" => book.id,
+          "book"        => {
+            "id"            => book.id,
             "serial_number" => "000001",
-            "title" => "A Book",
-            "author" => "A Writer",
-            "status" => "available"
+            "title"         => "A Book",
+            "author"        => "A Writer",
+            "status"        => "available"
           }
         )
       end
@@ -76,20 +76,20 @@ RSpec.describe "Library API", type: :request do
       booking = book.bookings.last
       expect(response).to have_http_status(:created)
       expect(response.parsed_body).to eq(
-        "booking_id" => booking.id,
+        "booking_id"  => booking.id,
         "borrowed_at" => booking.borrowed_at.iso8601(3),
-        "due_at" => booking.due_at.iso8601(3),
-        "book" => {
-          "id" => book.id,
+        "due_at"      => booking.due_at.iso8601(3),
+        "book"        => {
+          "id"            => book.id,
           "serial_number" => "000001",
-          "title" => "A Book",
-          "author" => "A Writer",
-          "status" => "borrowed"
+          "title"         => "A Book",
+          "author"        => "A Writer",
+          "status"        => "borrowed"
         },
-        "reader" => {
+        "reader"      => {
           "card_number" => "000123",
-          "full_name" => "Ada Lovelace",
-          "email" => "ada@example.com"
+          "full_name"   => "Ada Lovelace",
+          "email"       => "ada@example.com"
         }
       )
     end
@@ -192,12 +192,12 @@ RSpec.describe "Library API", type: :request do
       get "/books/#{book.id}"
 
       expect(response.parsed_body).to eq(
-        "id" => book.id,
+        "id"            => book.id,
         "serial_number" => "000001",
-        "title" => "A Book",
-        "author" => "A Writer",
-        "status" => "available",
-        "bookings" => []
+        "title"         => "A Book",
+        "author"        => "A Writer",
+        "status"        => "available",
+        "bookings"      => []
       )
     end
 
@@ -209,16 +209,16 @@ RSpec.describe "Library API", type: :request do
         get "/books/#{book.id}"
 
         expect(response).to have_http_status(:ok)
-        expect(response.parsed_body.fetch("bookings").map { |entry| entry.fetch("returned_at").nil? }).to eq([ false, true ])
+        expect(response.parsed_body.fetch("bookings").map { |entry| entry.fetch("returned_at").nil? }).to eq([false, true])
         expect(response.parsed_body.fetch("bookings").first).to eq(
-          "id" => first_booking.id,
+          "id"          => first_booking.id,
           "borrowed_at" => first_booking.borrowed_at.iso8601(3),
-          "due_at" => first_booking.due_at.iso8601(3),
+          "due_at"      => first_booking.due_at.iso8601(3),
           "returned_at" => first_booking.returned_at.iso8601(3),
-          "reader" => {
+          "reader"      => {
             "card_number" => "000123",
-            "full_name" => "Ada Lovelace",
-            "email" => "ada@example.com"
+            "full_name"   => "Ada Lovelace",
+            "email"       => "ada@example.com"
           }
         )
       end
