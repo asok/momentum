@@ -20,15 +20,11 @@ class BooksController < ApplicationController
   end
 
   def destroy
-    resource.with_lock do
-      if resource.bookings.where(returned_at: nil).exists?
-        render_error("Return the book before deleting it", :conflict)
-      else
-        resource.destroy!
+    DestroyBook.call(book: resource)
 
-        head :no_content
-      end
-    end
+    head :no_content
+  rescue DestroyBook::AlreadyBorrowed => e
+    render_error(e.message, :conflict)
   end
 
   def borrow

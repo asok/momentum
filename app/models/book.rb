@@ -8,7 +8,7 @@ class Book < ApplicationRecord
 
   def active_booking
     if association(:bookings).loaded?
-      bookings.find { |booking| booking.returned_at.nil? }
+      bookings.detect { |booking| booking.returned_at.nil? }
     else
       bookings.where(returned_at: nil).first
     end

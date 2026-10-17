@@ -1,10 +1,11 @@
-class ReturnBook
+module ReturnBook
+  extend self
+
   NotBorrowed = Class.new(StandardError)
 
-  def self.call(book:)
+  def call(book:)
     book.with_lock do
-      booking = book.bookings.where(returned_at: nil).first
-      raise NotBorrowed, "Book is not borrowed" unless booking
+      booking = book.active_booking || raise(NotBorrowed, "Book is not borrowed")
 
       booking.update!(returned_at: Time.current)
       booking
