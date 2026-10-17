@@ -34,7 +34,7 @@ books = [
 books.each do |serial_number, title, author|
   Book.find_or_create_by!(serial_number: serial_number) do |book|
     book.title = title
-    book.author = Author.find_or_create_by!(name: author)
+    book.author = author
   end
 end
 

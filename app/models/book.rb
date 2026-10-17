@@ -1,5 +1,5 @@
 class Book < ApplicationRecord
-  belongs_to :author
+
   has_many :bookings, dependent: :destroy
 
   validates :serial_number, presence: true, format: { with: /\A[0-9]{6}\z/ }, uniqueness: true
