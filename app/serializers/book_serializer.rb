@@ -18,7 +18,7 @@ class BookSerializer
   private
 
   def attributes(with_bookings: false)
-    data = { id: @book.id, serial_number: @book.serial_number, title: @book.title, author: @book.author.name,
+    data = { id: @book.id, serial_number: @book.serial_number, title: @book.title, author: @book.author,
              status: @book.active_booking ? "borrowed" : "available" }
     return data unless with_bookings
 

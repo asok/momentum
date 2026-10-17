@@ -1,6 +1,6 @@
 class BooksController < ApplicationController
   def index
-    books = Book.includes(:author, :bookings).order(:id)
+    books = Book.includes(:bookings).order(:id)
 
     render json: BookSerializer.collection(books)
   end

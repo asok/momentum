@@ -4,8 +4,7 @@ RSpec.describe "Library API", type: :request do
   include ActiveJob::TestHelper
   include ActiveSupport::Testing::TimeHelpers
 
-  let(:author) { create(:author, name: "A Writer") }
-  let(:book) { create(:book, serial_number: "000001", title: "A Book", author: author) }
+  let(:book) { create(:book, serial_number: "000001", title: "A Book", author: "A Writer") }
   let(:reader) { create(:user, card_number: "000123", full_name: "Ada Lovelace", email: "ada@example.com") }
 
   before { clear_enqueued_jobs }
@@ -19,29 +18,10 @@ RSpec.describe "Library API", type: :request do
       expect(response.parsed_body).to include("serial_number" => "000001", "author" => "A Writer", "status" => "available")
     end
 
-    it "reuses an existing author for books by the same writer" do
-      author
+    it "stores the author name on the book" do
       post "/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
 
-      expect(Book.last.author).to eq(author)
-      expect(Author.count).to eq(1)
-    end
-
-    it "retries with the author created by a competing request" do
-      allow_any_instance_of(Book).to receive(:save).and_wrap_original do |save, *args|
-        unless Author.exists?(name: "A Writer")
-          Author.create!(name: "A Writer")
-          raise ActiveRecord::RecordNotUnique
-        end
-
-        save.call(*args)
-      end
-
-      post "/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
-
-      expect(response).to have_http_status(:created)
-      expect(Book.last.author.name).to eq("A Writer")
-      expect(Author.count).to eq(1)
+      expect(Book.last.author).to eq("A Writer")
     end
 
     it "rejects a book without an author" do
