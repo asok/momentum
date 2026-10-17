@@ -5,8 +5,10 @@ class Booking < ApplicationRecord
   validates :borrowed_at, presence: true
   validate :return_not_before_borrow
 
+  DUE_AT_DELAY = 30.days.freeze
+
   def due_at
-    borrowed_at + 30.days
+    borrowed_at + DUE_AT_DELAY
   end
 
   private

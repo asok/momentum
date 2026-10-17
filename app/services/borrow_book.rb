@@ -5,8 +5,8 @@ module BorrowBook
   UserNotFound    = Class.new(StandardError)
 
   REMINDERS = {
-    EarlyBookReminderJob => 27.days,
-    LaterBookReminderJob => 30.days,
+    EarlyBookReminderJob => Booking::DUE_AT_DELAY - 3.days,
+    LaterBookReminderJob => Booking::DUE_AT_DELAY,
   }.freeze
 
   def call(book:, user:)
