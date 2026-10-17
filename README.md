@@ -19,7 +19,8 @@ Invalid inputs return `422`, missing records `404`, and invalid status transitio
 
 A booking records every borrow/return. A partial unique index on open bookings plus a row lock on the book prevent simultaneous borrowers. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history; a production system might archive instead.
 
-`BorrowBook` schedules two Solid Queue jobs, 27 and 30 days after the loan began. Solid Queue uses a separate database on the same PostgreSQL server and runs in the `worker` container. A job skips a returned/deleted booking; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders; an outbox would make this atomic in a production system.
+`BorrowBook` schedules two Solid Queue jobs, 27 and 30 days after the loan began. Solid Queue uses the same database on the same PostgreSQL server and runs in the `worker` container. This way enqueueing can be done within a transaction that updates the state of the databse.
+A job skips a returned/deleted booking; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders.
 
 ## API documentation
 

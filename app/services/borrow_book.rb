@@ -1,8 +1,9 @@
 module BorrowBook
   extend self
 
-  AlreadyBorrowed = Class.new(StandardError)
-  UserNotFound    = Class.new(StandardError)
+  AlreadyBorrowed        = Class.new(StandardError)
+  UserNotFound           = Class.new(StandardError)
+  ReminderEnqueueFailed  = Class.new(StandardError)
 
   REMINDERS = {
     EarlyBookReminderJob => Booking::DUE_AT_DELAY - 3.days,
@@ -12,8 +13,15 @@ module BorrowBook
   def call(book:, user:)
     assert_user(user)
 
-    create_booking(book:, user:).tap do |booking|
+    # SolidQueue is using the same db connection so enqueueing is atomic.
+    # Also the nice side effect is that there's no need for
+    # "transactional mailbox".
+    book.transaction do
+      booking = create_booking(book:, user:)
+
       enqueue_reminders(booking)
+
+      booking
     end
   end
 
@@ -33,7 +41,12 @@ module BorrowBook
 
   def enqueue_reminders(booking)
     REMINDERS.each_pair do |job_class, delay|
-      job_class.set(wait_until: booking.borrowed_at + delay).perform_later(booking)
+      enqueue(booking:, job_class:, delay:) ||
+        raise(ReminderEnqueueFailed, "Could not enqueue #{job_class.name}")
     end
+  end
+
+  def enqueue(booking:, job_class:, delay:)
+    job_class.set(wait_until: booking.borrowed_at + delay).perform_later(booking)
   end
 end

@@ -20,5 +20,24 @@ RSpec.describe BorrowBook do
 
       expect { described_class.call(book: book, user: user) }.to change { book.bookings.where(returned_at: nil).count }.by(1)
     end
+
+    context "when a reminder cannot be enqueued" do
+      before do
+        allow(LaterBookReminderJob).to receive(:set).and_return(instance_double(ActiveJob::ConfiguredJob, perform_later: false))
+      end
+
+      it "raises an enqueue error" do
+        expect { described_class.call(book: book, user: user) }
+          .to raise_error(BorrowBook::ReminderEnqueueFailed, "Could not enqueue LaterBookReminderJob")
+      end
+
+      it "rolls back the booking" do
+        expect do
+          described_class.call(book: book, user: user)
+        rescue BorrowBook::ReminderEnqueueFailed
+          nil
+        end.not_to change { book.bookings.count }
+      end
+    end
   end
 end
