@@ -13,12 +13,11 @@ module BorrowBook
   def call(book:, user:)
     assert_user(user)
 
-    # SolidQueue is using the same db connection so enqueueing is atomic.
-    # Also the nice side effect is that there's no need for
-    # "transactional mailbox".
-    book.transaction do
-      loan = create_loan(book:, user:)
+    book.with_lock do
+      book.active_loan && raise(AlreadyBorrowed, "Book is already borrowed")
 
+      loan = book.loans.create!(user: user, borrowed_at: Time.current)
+      # Solid Queue shares this transaction, so the loan and reminders commit together.
       enqueue_reminders(loan)
 
       loan
@@ -31,13 +30,6 @@ module BorrowBook
     raise UserNotFound, "Reader not found" unless user
   end
 
-  def create_loan(book:, user:)
-    book.with_lock do
-      book.active_loan && raise(AlreadyBorrowed, "Book is already borrowed")
-
-      book.loans.create!(user: user, borrowed_at: Time.current)
-    end
-  end
 
   def enqueue_reminders(loan)
     REMINDERS.each_pair do |job_class, delay|
