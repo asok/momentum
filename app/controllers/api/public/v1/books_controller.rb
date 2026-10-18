@@ -28,7 +28,7 @@ class Api::Public::V1::BooksController < ApplicationController
   end
 
   def borrow
-    user    = User.find_by(card_number: params.require(:card_number))
+    user = User.find_by(card_number: params.require(:card_number))
     loan = BorrowBook.call(book: resource, user: user)
 
     render json: LoanSerializer.new(loan).for_borrow, status: :created
