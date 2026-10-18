@@ -11,6 +11,16 @@ The API listens on `http://localhost:3000`.
 The API docs is accessible from [`/api-docs`](http://localhost:3000/api-docs).
 PostgreSQL data persists in a named volume. No authentication is implemented.
 
+## Seed the development database
+
+After starting the containers, load the sample books and users with:
+
+```sh
+docker compose exec web bin/rails db:seed
+```
+
+The seeds are safe to run again; existing records with the same serial or card numbers are not duplicated.
+
 ## Design
 
 ### Database level constraints
@@ -33,9 +43,11 @@ If the service does not need a state then it is a module with module level metho
 
 ## API documentation
 
-Interactive API documentation is available at [`/api-docs`](http://localhost:3000/api-docs) when the app is running. The page uses [Scalar](https://scalar.com/) and loads the OpenAPI document from `/api-docs/v1/swagger.yaml`. Scalar's API Reference script is pinned to version 1.75.0 on jsDelivr; the page itself is in `public/scalar/`.
+Interactive API documentation is available at [`/api-docs`](http://localhost:3000/api-docs).
+The page uses [Scalar](https://scalar.com/) and loads the OpenAPI document from `/api-docs/v1/swagger.yaml`.
 
-The request specs in `spec/requests/books_api_spec.rb` use the rswag DSL as both executable API examples and the source for the OpenAPI document. After updating those specs, regenerate the checked-in document with:
+The request specs in `spec/requests/books_api_spec.rb` use the rswag DSL to run requests tests and generate OpenAPI documentation.
+After updating those specs, regenerate the checked-in document with:
 
 ```sh
 bundle exec rake rswag:specs:swaggerize
@@ -57,3 +69,8 @@ RAILS_ENV=test DB_HOST=127.0.0.1 DB_PORT=5433 DB_USER=library DB_PASSWORD=librar
 ```
 
 Port `5433` avoids conflicts with a locally installed PostgreSQL on `5432`. Tests use the Active Job test adapter to inspect scheduled reminders without starting a worker.
+
+## Manual Test
+
+Visit [`/api-docs`](http://localhost:3000/api-docs). Use endpoint for borrowing to borrow a book.
+Run `docker compose exec worker more -f log/development.log` to see the logs for sending the mail after 27 and 30 days.
