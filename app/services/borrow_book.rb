@@ -14,7 +14,7 @@ module BorrowBook
     assert_user(user)
 
     book.with_lock do
-      book.active_loan && raise(AlreadyBorrowed, "Book is already borrowed")
+      raise AlreadyBorrowed, "Book is already borrowed" if book.active_loan
 
       loan = book.loans.create!(user: user, borrowed_at: Time.current)
       # Solid Queue shares this transaction, so the loan and reminders commit together.
