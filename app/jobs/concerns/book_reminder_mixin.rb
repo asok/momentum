@@ -19,11 +19,11 @@ module BookReminderMixin
   def log_message(loan, message)
     Rails.logger.info(
       {
-        event:      "book_reminder",
+        event:   "book_reminder",
         loan_id: loan.id,
-        to:         message.to,
-        subject:    message.subject,
-        body:       message.body.decoded
+        to:      message.to,
+        subject: message.subject,
+        body:    message.body.decoded
       }.to_json
     )
   end

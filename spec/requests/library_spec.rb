@@ -50,7 +50,7 @@ RSpec.describe "Library API", type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body).to eq(
-          "loan_id"  => loan.id,
+          "loan_id"     => loan.id,
           "returned_at" => loan.reload.returned_at.iso8601(3),
           "book"        => {
             "id"            => book.id,
@@ -76,7 +76,7 @@ RSpec.describe "Library API", type: :request do
       loan = book.loans.last
       expect(response).to have_http_status(:created)
       expect(response.parsed_body).to eq(
-        "loan_id"  => loan.id,
+        "loan_id"     => loan.id,
         "borrowed_at" => loan.borrowed_at.iso8601(3),
         "due_at"      => loan.due_at.iso8601(3),
         "book"        => {
@@ -197,7 +197,7 @@ RSpec.describe "Library API", type: :request do
         "title"         => "A Book",
         "author"        => "A Writer",
         "status"        => "available",
-        "loans"      => []
+        "loans"         => []
       )
     end
 

@@ -30,7 +30,6 @@ module BorrowBook
     raise UserNotFound, "Reader not found" unless user
   end
 
-
   def enqueue_reminders(loan)
     REMINDERS.each_pair do |job_class, delay|
       enqueue(loan:, job_class:, delay:) ||
