@@ -6,7 +6,9 @@ Start with:
 docker compose up --build
 ```
 
- the API listens on `http://localhost:3000`. PostgreSQL data persists in a named volume. No authentication is implemented.
+ the API listens on `http://localhost:3000`. 
+ The API docs is accessible from [`/api-docs`](http://localhost:3000/api-docs).
+ PostgreSQL data persists in a named volume. No authentication is implemented.
 
 ## Endpoints
 
@@ -27,12 +29,21 @@ Invalid inputs return `422`, missing records `404`, and invalid status transitio
 
 ### Database level constraints
 
-A loan records every borrow/return. A partial unique index on open loans plus a row lock on the book prevent simultaneous borrowers. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history; a production system might archive instead.
+A loan records every borrow/return. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history.
+
+A partial unique index on `loans.book_id`, restricted to rows where `returned_at IS NULL`, ensures that each book has at most one active loan. The borrow and return services also lock the book row while updating its loan state, keeping the concurrency logic straightforward. Because simultaneous requests for the same book are expected to be rare, the simplicity of pessimistic locking outweighs the potential contention. If contention becomes significant, handling uniqueness conflicts with retries may be worth considering.
 
 ### Background jobs
 
 `BorrowBook` schedules two Solid Queue jobs, 27 and 30 days after the loan began. Solid Queue uses the same database on the same PostgreSQL server and runs in the `worker` container. This way enqueueing can be done within a transaction that updates the state of the database.
-A job skips a returned/deleted loan; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders.
+A job skips a returned/deleted loan; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled.
+
+### MVC
+
+The app follows pattern "thin-controller-thin-model". The businnes logic resides in a service class/module that is called from a controller.
+
+If the service does not need a state then it is a module with module level methods.
+
 
 ## API documentation
 
