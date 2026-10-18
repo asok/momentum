@@ -3,7 +3,7 @@
 require "swagger_helper"
 
 RSpec.describe "Books API", type: :request do
-  path "/books" do
+  path "/api/public/v1/books" do
     get "List books" do
       tags "Books"
       produces "application/json"
@@ -58,7 +58,7 @@ RSpec.describe "Books API", type: :request do
     end
   end
 
-  path "/books/{id}" do
+  path "/api/public/v1/books/{id}" do
     parameter name: :id, in: :path, type: :integer, description: "The unique ID of the book."
 
     get "Show a book and its loan history" do
@@ -105,7 +105,7 @@ RSpec.describe "Books API", type: :request do
     end
   end
 
-  path "/books/{id}/borrow" do
+  path "/api/public/v1/books/{id}/borrow" do
     parameter name: :id, in: :path, type: :integer, description: "The unique ID of the book to borrow."
 
     post "Borrow a book" do
@@ -132,7 +132,7 @@ RSpec.describe "Books API", type: :request do
     end
   end
 
-  path "/books/{id}/return" do
+  path "/api/public/v1/books/{id}/return" do
     parameter name: :id, in: :path, type: :integer, description: "The unique ID of the book to return."
 
     post "Return a book" do

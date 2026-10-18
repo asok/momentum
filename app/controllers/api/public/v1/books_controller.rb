@@ -1,4 +1,4 @@
-class BooksController < ApplicationController
+class Api::Public::V1::BooksController < ApplicationController
   def index
     books = Book.includes(:loans).order(:id)
 

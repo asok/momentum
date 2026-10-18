@@ -3,8 +3,14 @@ Rails.application.routes.draw do
   mount Rswag::Api::Engine => "/api-docs"
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resources :books, only: %i[index show create destroy] do
-    post :borrow, on: :member
-    post :return, on: :member
+  namespace :api do
+    namespace :public do
+      namespace :v1 do
+        resources :books, only: %i[index show create destroy] do
+          post :borrow, on: :member
+          post :return, on: :member
+        end
+      end
+    end
   end
 end

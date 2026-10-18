@@ -12,12 +12,12 @@ docker compose up --build
 
 All payloads are JSON; serial and card numbers are **strings of exactly six digits** (leading zeroes are preserved).
 
-- `POST /books` — add a book: `{ "book": { "serial_number": "000001", "title": "A Book", "author": "An Author" } }`
-- `GET /books` — list books with `available`/`borrowed` status.
-- `GET /books/:id` — book details and chronological loan history, including reader, borrow/due/return dates.
-- `POST /books/:id/borrow` — `{ "card_number": "000123" }`; returns loan and due date.
-- `POST /books/:id/return` — return the current loan (no body required).
-- `DELETE /books/:id` — remove a book and its history, only if not borrowed.
+- `POST /api/public/v1/books` — add a book: `{ "book": { "serial_number": "000001", "title": "A Book", "author": "An Author" } }`
+- `GET /api/public/v1/books` — list books with `available`/`borrowed` status.
+- `GET /api/public/v1/books/:id` — book details and chronological loan history, including reader, borrow/due/return dates.
+- `POST /api/public/v1/books/:id/borrow` — `{ "card_number": "000123" }`; returns loan and due date.
+- `POST /api/public/v1/books/:id/return` — return the current loan (no body required).
+- `DELETE /api/public/v1/books/:id` — remove a book and its history, only if not borrowed.
 
 Borrow and return responses use `loan_id`; book details include a `loans` history. Clients using the former `booking_id` and `bookings` keys must update to these names.
 

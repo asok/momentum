@@ -10,22 +10,22 @@ RSpec.describe "Library API", type: :request do
   before { clear_enqueued_jobs }
   after { clear_enqueued_jobs }
 
-  describe "POST /books" do
+  describe "POST /api/public/v1/books" do
     it "creates a book" do
-      post "/books", params: { book: { serial_number: "000001", title: "A Book", author: "A Writer" } }
+      post "/api/public/v1/books", params: { book: { serial_number: "000001", title: "A Book", author: "A Writer" } }
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body).to include("serial_number" => "000001", "author" => "A Writer", "status" => "available")
     end
 
     it "stores the author name on the book" do
-      post "/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
+      post "/api/public/v1/books", params: { book: { serial_number: "000002", title: "Another Book", author: "A Writer" } }
 
       expect(Book.last.author).to eq("A Writer")
     end
 
     it "rejects a book without an author" do
-      post "/books", params: { book: { serial_number: "000002", title: "Another Book" } }
+      post "/api/public/v1/books", params: { book: { serial_number: "000002", title: "Another Book" } }
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(Book.count).to eq(0)
@@ -33,10 +33,10 @@ RSpec.describe "Library API", type: :request do
 
     it "rejects a duplicate or malformed serial number" do
       book
-      post "/books", params: { book: { serial_number: "000001", title: "Another", author: "Writer" } }
+      post "/api/public/v1/books", params: { book: { serial_number: "000001", title: "Another", author: "Writer" } }
       expect(response).to have_http_status(:unprocessable_content)
 
-      post "/books", params: { book: { serial_number: "123", title: "Another", author: "Writer" } }
+      post "/api/public/v1/books", params: { book: { serial_number: "123", title: "Another", author: "Writer" } }
       expect(response).to have_http_status(:unprocessable_content)
     end
   end
@@ -46,7 +46,7 @@ RSpec.describe "Library API", type: :request do
       let!(:loan) { create(:loan, book: book, user: reader) }
 
       it "returns the book and marks its loan as returned" do
-        post "/books/#{book.id}/return"
+        post "/api/public/v1/books/#{book.id}/return"
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body).to eq(
@@ -64,14 +64,14 @@ RSpec.describe "Library API", type: :request do
     end
 
     it "rejects returning an available book" do
-      post "/books/#{book.id}/return"
+      post "/api/public/v1/books/#{book.id}/return"
       expect(response).to have_http_status(:conflict)
     end
   end
 
   describe "POST /borrow" do
     it "creates a loan and returns the borrowed book and reader" do
-      post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+      post "/api/public/v1/books/#{book.id}/borrow", params: { card_number: reader.card_number }
 
       loan = book.loans.last
       expect(response).to have_http_status(:created)
@@ -96,7 +96,7 @@ RSpec.describe "Library API", type: :request do
 
     it "schedules reminders on day 27 and day 30" do
       travel_to Time.zone.parse("2026-10-16 12:00:00") do
-        post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+        post "/api/public/v1/books/#{book.id}/borrow", params: { card_number: reader.card_number }
 
         loan = book.loans.last
 
@@ -113,7 +113,7 @@ RSpec.describe "Library API", type: :request do
       let!(:previous_loan) { create(:loan, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
 
       it "enqueues reminders for the new loan" do
-        post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+        post "/api/public/v1/books/#{book.id}/borrow", params: { card_number: reader.card_number }
 
         loan = book.loans.last
         expect(response).to have_http_status(:created)
@@ -126,7 +126,7 @@ RSpec.describe "Library API", type: :request do
       let!(:loan) { create(:loan, book: book, user: reader) }
 
       it "rejects another borrowing" do
-        post "/books/#{book.id}/borrow", params: { card_number: reader.card_number }
+        post "/api/public/v1/books/#{book.id}/borrow", params: { card_number: reader.card_number }
 
         expect(response).to have_http_status(:conflict)
         expect(book.loans.count).to eq(1)
@@ -134,17 +134,17 @@ RSpec.describe "Library API", type: :request do
     end
 
     it "rejects a missing reader" do
-      post "/books/#{book.id}/borrow", params: { card_number: "999999" }
+      post "/api/public/v1/books/#{book.id}/borrow", params: { card_number: "999999" }
       expect(response).to have_http_status(:not_found)
     end
   end
 
-  describe "DELETE /books/:id" do
+  describe "DELETE /api/public/v1/books/:id" do
     context "when the book has been returned" do
       let!(:loan) { create(:loan, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
 
       it "removes the book and its history" do
-        delete "/books/#{book.id}"
+        delete "/api/public/v1/books/#{book.id}"
 
         expect(response).to have_http_status(:no_content)
         expect(Loan.count).to eq(0)
@@ -155,19 +155,19 @@ RSpec.describe "Library API", type: :request do
       let!(:loan) { create(:loan, book: book, user: reader) }
 
       it "refuses to delete the book" do
-        delete "/books/#{book.id}"
+        delete "/api/public/v1/books/#{book.id}"
 
         expect(response).to have_http_status(:conflict)
       end
     end
   end
 
-  describe "GET /books" do
+  describe "GET /api/public/v1/books" do
     context "when a book is borrowed" do
       let!(:loan) { create(:loan, book: book, user: reader) }
 
       it "lists the book as borrowed" do
-        get "/books"
+        get "/api/public/v1/books"
 
         expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to eq(
           "id" => book.id, "serial_number" => "000001", "title" => "A Book",
@@ -180,16 +180,16 @@ RSpec.describe "Library API", type: :request do
       let!(:loan) { create(:loan, book: book, user: reader, borrowed_at: 1.day.ago, returned_at: Time.current) }
 
       it "lists the book as available" do
-        get "/books"
+        get "/api/public/v1/books"
 
         expect(response.parsed_body.find { |entry| entry.fetch("id") == book.id }).to include("status" => "available")
       end
     end
   end
 
-  describe "GET /books/:id" do
+  describe "GET /api/public/v1/books/:id" do
     it "serializes a book with its loan history" do
-      get "/books/#{book.id}"
+      get "/api/public/v1/books/#{book.id}"
 
       expect(response.parsed_body).to eq(
         "id"            => book.id,
@@ -206,7 +206,7 @@ RSpec.describe "Library API", type: :request do
       let!(:second_loan) { create(:loan, book: book, user: reader) }
 
       it "lists complete history with the returned loan first" do
-        get "/books/#{book.id}"
+        get "/api/public/v1/books/#{book.id}"
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body.fetch("loans").map { |entry| entry.fetch("returned_at").nil? }).to eq([false, true])
@@ -225,7 +225,7 @@ RSpec.describe "Library API", type: :request do
     end
 
     it "returns 404 for a missing book" do
-      get "/books/999999"
+      get "/api/public/v1/books/999999"
       expect(response).to have_http_status(:not_found)
     end
   end

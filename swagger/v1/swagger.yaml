@@ -5,7 +5,7 @@ info:
   description: Manage the library catalog, borrow books, and track returns.
   version: v1
 paths:
-  "/books":
+  "/api/public/v1/books":
     get:
       summary: List books
       tags:
@@ -74,7 +74,7 @@ paths:
               required:
               - book
         description: Book details to add to the catalog.
-  "/books/{id}":
+  "/api/public/v1/books/{id}":
     parameters:
     - name: id
       in: path
@@ -129,7 +129,7 @@ paths:
           description: book deleted
         '409':
           description: book has an active loan
-  "/books/{id}/borrow":
+  "/api/public/v1/books/{id}/borrow":
     parameters:
     - name: id
       in: path
@@ -159,7 +159,7 @@ paths:
               required:
               - card_number
         description: The library card number of the reader borrowing the book.
-  "/books/{id}/return":
+  "/api/public/v1/books/{id}/return":
     parameters:
     - name: id
       in: path
