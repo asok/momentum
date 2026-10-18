@@ -1,6 +1,6 @@
 class BooksController < ApplicationController
   def index
-    books = Book.includes(:bookings).order(:id)
+    books = Book.includes(:loans).order(:id)
 
     render json: BookSerializer.collection(books)
   end
@@ -29,9 +29,9 @@ class BooksController < ApplicationController
 
   def borrow
     user    = User.find_by(card_number: params.require(:card_number))
-    booking = BorrowBook.call(book: resource, user: user)
+    loan = BorrowBook.call(book: resource, user: user)
 
-    render json: BookingSerializer.new(booking).for_borrow, status: :created
+    render json: LoanSerializer.new(loan).for_borrow, status: :created
   rescue BorrowBook::AlreadyBorrowed => e
     render_error(e.message, :conflict)
   rescue BorrowBook::UserNotFound => e
@@ -39,9 +39,9 @@ class BooksController < ApplicationController
   end
 
   def return
-    booking = ReturnBook.call(book: resource)
+    loan = ReturnBook.call(book: resource)
 
-    render json: BookingSerializer.new(booking).for_return
+    render json: LoanSerializer.new(loan).for_return
   rescue ReturnBook::NotBorrowed => e
     render_error(e.message, :conflict)
   end

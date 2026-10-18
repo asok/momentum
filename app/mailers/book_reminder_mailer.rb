@@ -1,25 +1,25 @@
 class BookReminderMailer < ActionMailer::Base
   default from: "library@example.com"
 
-  def early_reminder(booking)
-    send_reminder(booking, "Your library book is due in 3 days")
+  def early_reminder(loan)
+    send_reminder(loan, "Your library book is due in 3 days")
   end
 
-  def late_reminder(booking)
-    send_reminder(booking, "Your library book is due today")
+  def late_reminder(loan)
+    send_reminder(loan, "Your library book is due today")
   end
 
   private
 
-  def send_reminder(booking, subject)
-    mail(to: booking.user.email, subject: subject, body: reminder_body(booking))
+  def send_reminder(loan, subject)
+    mail(to: loan.user.email, subject: subject, body: reminder_body(loan))
   end
 
-  def reminder_body(booking)
+  def reminder_body(loan)
     <<~TEXT
-      Hello #{booking.user.full_name},
+      Hello #{loan.user.full_name},
 
-      Please return #{booking.book.title} (#{booking.book.serial_number}) by #{booking.due_at.to_date}.
+      Please return #{loan.book.title} (#{loan.book.serial_number}) by #{loan.due_at.to_date}.
     TEXT
   end
 end

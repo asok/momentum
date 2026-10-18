@@ -12,18 +12,18 @@ class BookSerializer
   end
 
   def with_history
-    attributes(with_bookings: true)
+    attributes(with_loans: true)
   end
 
   private
 
-  def attributes(with_bookings: false)
+  def attributes(with_loans: false)
     data = { id: @book.id, serial_number: @book.serial_number, title: @book.title, author: @book.author,
-             status: @book.active_booking ? "borrowed" : "available" }
-    return data unless with_bookings
+             status: @book.active_loan ? "borrowed" : "available" }
+    return data unless with_loans
 
-    data.merge(bookings: @book.bookings.includes(:user).order(:borrowed_at, :id).map do |booking|
-      BookingSerializer.new(booking).for_history
+    data.merge(loans: @book.loans.includes(:user).order(:borrowed_at, :id).map do |loan|
+      LoanSerializer.new(loan).for_history
     end)
   end
 end

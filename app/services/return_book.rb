@@ -5,10 +5,10 @@ module ReturnBook
 
   def call(book:)
     book.with_lock do
-      booking = book.active_booking || raise(NotBorrowed, "Book is not borrowed")
+      loan = book.active_loan || raise(NotBorrowed, "Book is not borrowed")
 
-      booking.update!(returned_at: Time.current)
-      booking
+      loan.update!(returned_at: Time.current)
+      loan
     end
   end
 end

@@ -72,9 +72,9 @@ RSpec.describe "Books API", type: :request do
             title:         { type: :string },
             author:        { type: :string },
             status:        { type: :string, enum: %w[available borrowed] },
-            bookings:      { type: :array, items: { type: :object } }
+            loans:         { type: :array, items: { type: :object } }
           },
-               required:   %w[id serial_number title author status bookings]
+               required:   %w[id serial_number title author status loans]
 
         let(:id) { create(:book).id }
         run_test!

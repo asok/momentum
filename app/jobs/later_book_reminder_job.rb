@@ -3,7 +3,7 @@ class LaterBookReminderJob < ApplicationJob
 
   private
 
-  def reminder_message(booking)
-    BookReminderMailer.late_reminder(booking)
+  def reminder_message(loan)
+    BookReminderMailer.late_reminder(loan)
   end
 end

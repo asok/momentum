@@ -5,20 +5,20 @@ RSpec.describe BorrowBook do
     let(:book) { create(:book) }
     let(:user) { create(:user) }
 
-    it "creates an active booking" do
-      expect { described_class.call(book: book, user: user) }.to change { book.bookings.where(returned_at: nil).count }.by(1)
+    it "creates an active loan" do
+      expect { described_class.call(book: book, user: user) }.to change { book.loans.where(returned_at: nil).count }.by(1)
     end
 
-    it "rejects borrowing when the book has an active booking" do
-      create(:booking, book: book)
+    it "rejects borrowing when the book has an active loan" do
+      create(:loan, book: book)
 
       expect { described_class.call(book: book, user: user) }.to raise_error(BorrowBook::AlreadyBorrowed)
     end
 
     it "allows borrowing again after the book is returned" do
-      create(:booking, book: book, borrowed_at: 2.days.ago, returned_at: 1.day.ago)
+      create(:loan, book: book, borrowed_at: 2.days.ago, returned_at: 1.day.ago)
 
-      expect { described_class.call(book: book, user: user) }.to change { book.bookings.where(returned_at: nil).count }.by(1)
+      expect { described_class.call(book: book, user: user) }.to change { book.loans.where(returned_at: nil).count }.by(1)
     end
 
     context "when a reminder cannot be enqueued" do
@@ -31,12 +31,12 @@ RSpec.describe BorrowBook do
           .to raise_error(BorrowBook::ReminderEnqueueFailed, "Could not enqueue LaterBookReminderJob")
       end
 
-      it "rolls back the booking" do
+      it "rolls back the loan" do
         expect do
           described_class.call(book: book, user: user)
         rescue BorrowBook::ReminderEnqueueFailed
           nil
-        end.not_to change { book.bookings.count }
+        end.not_to change { book.loans.count }
       end
     end
   end

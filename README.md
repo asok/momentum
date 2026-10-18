@@ -14,10 +14,12 @@ All payloads are JSON; serial and card numbers are **strings of exactly six digi
 
 - `POST /books` — add a book: `{ "book": { "serial_number": "000001", "title": "A Book", "author": "An Author" } }`
 - `GET /books` — list books with `available`/`borrowed` status.
-- `GET /books/:id` — book details and chronological booking history, including reader, borrow/due/return dates.
-- `POST /books/:id/borrow` — `{ "card_number": "000123" }`; returns booking and due date.
-- `POST /books/:id/return` — return the current booking (no body required).
+- `GET /books/:id` — book details and chronological loan history, including reader, borrow/due/return dates.
+- `POST /books/:id/borrow` — `{ "card_number": "000123" }`; returns loan and due date.
+- `POST /books/:id/return` — return the current loan (no body required).
 - `DELETE /books/:id` — remove a book and its history, only if not borrowed.
+
+Borrow and return responses use `loan_id`; book details include a `loans` history. Clients using the former `booking_id` and `bookings` keys must update to these names.
 
 Invalid inputs return `422`, missing records `404`, and invalid status transitions `409`. Book IDs are database IDs; serial numbers and card numbers are unique business identifiers.
 
@@ -25,12 +27,12 @@ Invalid inputs return `422`, missing records `404`, and invalid status transitio
 
 ### Database level constraints
 
-A booking records every borrow/return. A partial unique index on open bookings plus a row lock on the book prevent simultaneous borrowers. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history; a production system might archive instead.
+A loan records every borrow/return. A partial unique index on open loans plus a row lock on the book prevent simultaneous borrowers. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history; a production system might archive instead.
 
 ### Background jobs
 
 `BorrowBook` schedules two Solid Queue jobs, 27 and 30 days after the loan began. Solid Queue uses the same database on the same PostgreSQL server and runs in the `worker` container. This way enqueueing can be done within a transaction that updates the state of the database.
-A job skips a returned/deleted booking; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders.
+A job skips a returned/deleted loan; otherwise it builds the mailer message and writes its payload to the worker log (no real email is sent). Already-scheduled jobs are intentionally not cancelled. If enqueueing fails after the loan commits, the loan remains recorded but an operator must retry the reminders.
 
 ## API documentation
 

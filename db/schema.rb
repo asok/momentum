@@ -10,21 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_17_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
-  create_table "bookings", force: :cascade do |t|
+  create_table "loans", force: :cascade do |t|
     t.bigint "book_id", null: false
     t.bigint "user_id", null: false
     t.datetime "borrowed_at", null: false
     t.datetime "returned_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["book_id"], name: "index_bookings_on_active_book", unique: true, where: "(returned_at IS NULL)"
-    t.index ["book_id"], name: "index_bookings_on_book_id"
-    t.index ["user_id"], name: "index_bookings_on_user_id"
-    t.check_constraint "returned_at IS NULL OR returned_at >= borrowed_at", name: "bookings_valid_return_date"
+    t.index ["book_id"], name: "index_loans_on_active_book", unique: true, where: "(returned_at IS NULL)"
+    t.index ["book_id"], name: "index_loans_on_book_id"
+    t.index ["user_id"], name: "index_loans_on_user_id"
+    t.check_constraint "returned_at IS NULL OR returned_at >= borrowed_at", name: "loans_valid_return_date"
   end
 
   create_table "books", force: :cascade do |t|
@@ -198,8 +198,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_000001) do
     t.check_constraint "card_number::text ~ '^[0-9]{6}$'::text", name: "users_card_number_six_digits"
   end
 
-  add_foreign_key "bookings", "books"
-  add_foreign_key "bookings", "users"
+  add_foreign_key "loans", "books"
+  add_foreign_key "loans", "users"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

@@ -5,22 +5,22 @@ module BookReminderMixin
     discard_on ActiveJob::DeserializationError
   end
 
-  def perform(booking)
-    return if booking.returned_at
+  def perform(loan)
+    return if loan.returned_at
 
-    message = reminder_message(booking)
+    message = reminder_message(loan)
 
-    log_message(booking, message)
+    log_message(loan, message)
     message.deliver_now
   end
 
   protected
 
-  def log_message(booking, message)
+  def log_message(loan, message)
     Rails.logger.info(
       {
         event:      "book_reminder",
-        booking_id: booking.id,
+        loan_id: loan.id,
         to:         message.to,
         subject:    message.subject,
         body:       message.body.decoded

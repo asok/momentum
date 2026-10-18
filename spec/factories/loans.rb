@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :booking do
+  factory :loan do
     book
     user
     borrowed_at { Time.current }

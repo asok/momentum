@@ -6,8 +6,8 @@ module BorrowBook
   ReminderEnqueueFailed  = Class.new(StandardError)
 
   REMINDERS = {
-    EarlyBookReminderJob => Booking::DUE_AT_DELAY - 3.days,
-    LaterBookReminderJob => Booking::DUE_AT_DELAY,
+    EarlyBookReminderJob => Loan::DUE_AT_DELAY - 3.days,
+    LaterBookReminderJob => Loan::DUE_AT_DELAY,
   }.freeze
 
   def call(book:, user:)
@@ -17,11 +17,11 @@ module BorrowBook
     # Also the nice side effect is that there's no need for
     # "transactional mailbox".
     book.transaction do
-      booking = create_booking(book:, user:)
+      loan = create_loan(book:, user:)
 
-      enqueue_reminders(booking)
+      enqueue_reminders(loan)
 
-      booking
+      loan
     end
   end
 
@@ -31,22 +31,22 @@ module BorrowBook
     raise UserNotFound, "Reader not found" unless user
   end
 
-  def create_booking(book:, user:)
+  def create_loan(book:, user:)
     book.with_lock do
-      book.active_booking && raise(AlreadyBorrowed, "Book is already borrowed")
+      book.active_loan && raise(AlreadyBorrowed, "Book is already borrowed")
 
-      book.bookings.create!(user: user, borrowed_at: Time.current)
+      book.loans.create!(user: user, borrowed_at: Time.current)
     end
   end
 
-  def enqueue_reminders(booking)
+  def enqueue_reminders(loan)
     REMINDERS.each_pair do |job_class, delay|
-      enqueue(booking:, job_class:, delay:) ||
+      enqueue(loan:, job_class:, delay:) ||
         raise(ReminderEnqueueFailed, "Could not enqueue #{job_class.name}")
     end
   end
 
-  def enqueue(booking:, job_class:, delay:)
-    job_class.set(wait_until: booking.borrowed_at + delay).perform_later(booking)
+  def enqueue(loan:, job_class:, delay:)
+    job_class.set(wait_until: loan.borrowed_at + delay).perform_later(loan)
   end
 end
