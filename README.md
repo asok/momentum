@@ -1,35 +1,22 @@
 # Library API
 
 Ruby 3.2.2 / Rails 8.1 / PostgreSQL. 
+
 Start with:
 ```sh
 docker compose up --build
 ```
 
- the API listens on `http://localhost:3000`. 
- The API docs is accessible from [`/api-docs`](http://localhost:3000/api-docs).
- PostgreSQL data persists in a named volume. No authentication is implemented.
-
-## Endpoints
-
-All payloads are JSON; serial and card numbers are **strings of exactly six digits** (leading zeroes are preserved).
-
-- `POST /api/public/v1/books` — add a book: `{ "book": { "serial_number": "000001", "title": "A Book", "author": "An Author" } }`
-- `GET /api/public/v1/books` — list books with `available`/`borrowed` status.
-- `GET /api/public/v1/books/:id` — book details and chronological loan history, including reader, borrow/due/return dates.
-- `POST /api/public/v1/books/:id/borrow` — `{ "card_number": "000123" }`; returns loan and due date.
-- `POST /api/public/v1/books/:id/return` — return the current loan (no body required).
-- `DELETE /api/public/v1/books/:id` — remove a book and its history, only if not borrowed.
-
-Borrow and return responses use `loan_id`; book details include a `loans` history. Clients using the former `booking_id` and `bookings` keys must update to these names.
-
-Invalid inputs return `422`, missing records `404`, and invalid status transitions `409`. Book IDs are database IDs; serial numbers and card numbers are unique business identifiers.
+The API listens on `http://localhost:3000`. 
+The API docs is accessible from [`/api-docs`](http://localhost:3000/api-docs).
+PostgreSQL data persists in a named volume. No authentication is implemented.
 
 ## Design
 
 ### Database level constraints
 
-A loan records every borrow/return. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history.
+A loan records every borrow/return. Reader email is unique case-insensitively; database constraints back up key validations. Deleting a returned book also deletes its history. Production
+version might be archiving instead.
 
 A partial unique index on `loans.book_id`, restricted to rows where `returned_at IS NULL`, ensures that each book has at most one active loan. The borrow and return services also lock the book row while updating its loan state, keeping the concurrency logic straightforward. Because simultaneous requests for the same book are expected to be rare, the simplicity of pessimistic locking outweighs the potential contention. If contention becomes significant, handling uniqueness conflicts with retries may be worth considering.
 
@@ -44,7 +31,6 @@ The app follows pattern "thin-controller-thin-model". The businnes logic resides
 
 If the service does not need a state then it is a module with module level methods.
 
-
 ## API documentation
 
 Interactive API documentation is available at [`/api-docs`](http://localhost:3000/api-docs) when the app is running. The page uses [Scalar](https://scalar.com/) and loads the OpenAPI document from `/api-docs/v1/swagger.yaml`. Scalar's API Reference script is pinned to version 1.75.0 on jsDelivr; the page itself is in `public/scalar/`.
@@ -54,8 +40,6 @@ The request specs in `spec/requests/books_api_spec.rb` use the rswag DSL as both
 ```sh
 bundle exec rake rswag:specs:swaggerize
 ```
-
-If PostgreSQL is not available at the default local connection, set the test database connection variables used in the host test instructions below when running this command.
 
 ## Tests
 
